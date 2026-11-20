@@ -1,2 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 *\__pycache__
+
+# IDEs e editores
+.vscode/
 \.vscode
+.idea/
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+*venv/
+deep-venv/
+**/rnn/deep-venv/
+Seminarios/rnn/deep-venv/
+
+# Pasta rnn: data e resultados
+**/rnn/data/
+Seminarios/rnn/data/
+**/rnn/results/
+Seminarios/rnn/results/
+**/rnn/resultados/
+Seminarios/rnn/resultados/
