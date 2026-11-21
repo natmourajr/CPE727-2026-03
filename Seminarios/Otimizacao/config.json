@@ -1,0 +1,27 @@
+{
+  "dataset": "shapes",
+  "download": false,
+  "class_pair": [
+    3,
+    8
+  ],
+  "image_size": 20,
+  "seed": 42,
+  "n_train": 120,
+  "n_val": 260,
+  "n_test": 260,
+  "image_noise": 0.28,
+  "flip_train": 0.25,
+  "model": "mlp",
+  "hidden": 96,
+  "epochs_erm": 110,
+  "epochs_early": 180,
+  "epochs_batch": 15,
+  "batch_size": 20,
+  "patience": 19,
+  "lr_erm": 0.14,
+  "lr_early": 0.15,
+  "device": "cpu",
+  "data_path": "/app/dados",
+  "outdir": "/app/graficos"
+}

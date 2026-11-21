@@ -1,0 +1,20 @@
+services:
+  seminario:
+    build: .
+    image: seminario-goodfellow:cpu
+    volumes:
+      - ./graficos:/app/graficos
+      - ./dados:/app/dados
+    environment:
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    command:
+      - python
+      - seminario_completo.py
+      - --chapters
+      - all
+      - --config-8-1
+      - config.json
+      - --outdir
+      - /app/graficos
