@@ -35,6 +35,7 @@ Cada aluno, depois da apresentação do seminário, deve atualizar a tabela abai
 | CNN | Eraldo Junior | 29/10 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/323c363e319ff5fa2b74b6ca6335e78f8ebd1665/Seminarios/redes-neurais-convolucionais/slides.pdf) |
 | Autoencoders | Alice Cipriano e Leandro Fernandes | 10/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/autoencoders/slides.pdf) |
 | Representation Learning | Vinícius Ferreira Neves | 12/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/representation-learning/slides.pdf) |
+| GAN | Pedro Henrique Batista Campos, Daniel Cordeiro Marques | 12/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/gan/slides.pdf) |
 
 ## Conteúdo recomendado
 
