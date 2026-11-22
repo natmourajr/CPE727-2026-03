@@ -33,6 +33,7 @@ Cada aluno, depois da apresentação do seminário, deve atualizar a tabela abai
 | DeepNN | Gabriel Lisboa | 20/10 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/deep-nn/seminario_cap6_DeepNN.pdf) |
 | Regularização | Matheus Sotero | 22/10 |  [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/regularizacao/Regulariza%C3%A7%C3%A3o.pdf) |
 | CNN | Eraldo Junior | 29/10 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/323c363e319ff5fa2b74b6ca6335e78f8ebd1665/Seminarios/redes-neurais-convolucionais/slides.pdf) |
+| RNN | João Pedro Alcantara Gomes | 03/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/323c363e319ff5fa2b74b6ca6335e78f8ebd1665/Seminarios/rnn/RNN___DeepLearning.pdf) |
 | Autoencoders | Alice Cipriano e Leandro Fernandes | 10/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/autoencoders/slides.pdf) |
 | Representation Learning | Vinícius Ferreira Neves | 12/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/representation-learning/slides.pdf) |
 | GAN | Pedro Henrique Batista Campos, Daniel Cordeiro Marques | 12/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/gan/slides.pdf) |
