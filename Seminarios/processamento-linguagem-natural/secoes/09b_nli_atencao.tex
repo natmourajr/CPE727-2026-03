@@ -1,0 +1,322 @@
+%========================================================================================
+%  Seção 16.5 do D2L -- Natural Language Inference: Using Attention (Decomposable Attention)
+%  https://d2l.ai/chapter_natural-language-processing-applications/natural-language-inference-attention.html
+%========================================================================================
+
+%------------------------------------------------
+\section{Inferência de linguagem natural com atenção}
+%------------------------------------------------
+
+\begin{frame}{Inferência de linguagem natural (Attention)}
+    \small
+    Dada uma \textbf{premissa} e uma \textbf{hipótese}, a hipótese decorre da premissa?
+    \vspace{0.15cm}
+    \begin{block}{Premissa}
+        \centering ``Um homem toca violão.''
+    \end{block}
+    \vspace{0.1cm}
+    {\centering
+    \footnotesize
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        Hipótese & Relação & Classe \\
+        \midrule
+        ``Alguém está fazendo música.''  & {\color{dexpiGreenDark}\textbf{implica}}     & \textit{entailment} \\
+        ``O homem está dormindo.''       & {\color{dexpiRedDark}\textbf{contradiz}}     & \textit{contradiction} \\
+        ``O homem é famoso.''            & {\color{dexpiBlue}\textbf{não dá para saber}} & \textit{neutral} \\
+        \bottomrule
+    \end{tabular}\par}
+
+    \vspace{0.2cm}
+    \begin{exampleblock}{Ideia central: alinhar, não ler em sequência}
+        \footnotesize
+        Para decidir, basta \textbf{alinhar} cada palavra de um lado com as do outro (``toca violão'' $\leftrightarrow$ ``fazendo música'') e checar se os trechos alinhados concordam. Nenhuma RNN pesada é necessária.
+    \end{exampleblock}
+
+    \note{
+        A tarefa de inferência de linguagem natural, ou NLI, recebe duas frases: a premissa e a hipótese. A pergunta é se, assumindo a premissa verdadeira, a hipótese também é verdadeira.
+        Tomando como premissa ``um homem toca violão'', há três respostas possíveis. ``Alguém está fazendo música'' é uma implicação, em inglês \textit{entailment}. ``O homem está dormindo'' é uma contradição. E ``o homem é famoso'' é neutra: a premissa não permite concluir nem uma coisa nem outra.
+        A ideia do modelo desta seção, a \textit{decomposable attention} \cite{parikh2016decomposable}, é que, para decidir isso, não precisamos ler as frases em sequência com uma RNN. Basta alinhar as palavras de uma frase com as da outra, e verificar se os trechos alinhados concordam, se contradizem ou se não têm relação.
+    }
+\end{frame}
+
+\begin{frame}{Visão geral: três etapas treinadas em conjunto}
+    \centering
+    \begin{tikzpicture}[
+        ent/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm, minimum width=1.6cm},
+        etapa/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, align=center, font=\scriptsize\bfseries, minimum height=1.1cm, minimum width=2.3cm},
+        res/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm, minimum width=1.6cm},
+        arr/.style={-{Stealth}, thick, dexpiBlue}]
+        \node[ent] (a) at (0,0.65) {premissa $A$\\$m$ tokens};
+        \node[ent] (b) at (0,-0.65) {hipótese $B$\\$n$ tokens};
+        \node[etapa] (att) at (3.0,0) {1. Attending\\{\scriptsize\mdseries alinha (MLP $f$)}};
+        \node[etapa] (cmp) at (6.0,0) {2. Comparing\\{\scriptsize\mdseries compara (MLP $g$)}};
+        \node[etapa] (agg) at (9.0,0) {3. Aggregating\\{\scriptsize\mdseries resume (MLP $h$)}};
+        \node[res] (y) at (11.6,0) {3 classes\\{\tiny ent./contr./neutra}};
+        \draw[arr] (a.east) -- (att.west |- a.east);
+        \draw[arr] (b.east) -- (att.west |- b.east);
+        \draw[arr] (att) -- (cmp);
+        \draw[arr] (cmp) -- (agg);
+        \draw[arr] (agg) -- (y);
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{O que cada etapa responde}
+                \footnotesize
+                \begin{itemize}\setlength{\itemsep}{1pt}
+                    \item \textbf{Attending}: a qual palavra do outro lado cada palavra corresponde?
+                    \item \textbf{Comparing}: o par alinhado concorda ou contradiz?
+                    \item \textbf{Aggregating}: somando as comparações, qual a classe?
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Vantagem: a decomposição}
+                \footnotesize
+                Comparar todos os pares exigiria aplicar uma MLP $m \times n$ vezes. Aqui, $f$ roda uma vez por token: $m + n$ aplicações. O custo cresce de forma \textbf{linear}, e não quadrática, com o tamanho das frases.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        O modelo tem três etapas, treinadas em conjunto, de ponta a ponta. A entrada são as duas sequências: a premissa $A$, com $m$ tokens, e a hipótese $B$, com $n$ tokens.
+        A primeira etapa, \textit{attending}, alinha suavemente cada token de uma frase com os tokens da outra. A segunda, \textit{comparing}, compara cada token com o resumo do que foi alinhado a ele. A terceira, \textit{aggregating}, soma essas comparações e classifica em três classes.
+        O ganho computacional vem de um truque na primeira etapa. Em vez de passar cada par de tokens por uma MLP, o que daria $m$ vezes $n$ aplicações, a MLP $f$ é aplicada separadamente a cada token, em $m$ mais $n$ aplicações, e depois só fazemos produtos escalares entre os resultados. O custo passa de quadrático para linear no comprimento das frases.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 1 --- Attending: a matriz de afinidade}
+    \centering
+    {\scriptsize Cada palavra passa pela \destaque{mesma rede neural $f$} (``mesma régua'') antes de calcularmos a afinidade entre as frases.\par}
+    \vspace{0.25cm}
+    \begin{tikzpicture}[
+        pal/.style={font=\scriptsize, text height=1.6ex, text depth=0.4ex, inner sep=1pt},
+        seta/.style={-{Stealth[length=1.8mm]}, line width=0.8pt, dexpiBlue!70},
+        cel/.style={draw=white, line width=1pt, minimum width=1.15cm, minimum height=0.36cm, font=\scriptsize, inner sep=0pt},
+        forte/.style={cel, fill=dexpiBlueDark, text=white, font=\scriptsize\bfseries},
+        medio/.style={cel, fill=dexpiBlue!25},
+        fraco/.style={cel, fill=gray!12, text=gray!70!black},
+        cab/.style={font=\scriptsize\bfseries, text height=1.6ex, text depth=0.4ex, inner sep=1pt}]
+
+        % --- Palavras de A e B ---
+        \node[font=\scriptsize\bfseries, text=dexpiBlue] at (-4.0,0.45) {Premissa $A$};
+        \node[pal] at (-4.0,0) {Um \quad homem \quad toca \quad violão};
+        \node[font=\scriptsize\bfseries, text=dexpiGreenDark] at (2.2,0.45) {Hipótese $B$};
+        \node[pal] at (2.2,0) {Alguém \quad fazendo \quad música};
+
+        % --- MLP f compartilhada ---
+        \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\small\bfseries,
+              minimum width=4.6cm, minimum height=0.5cm] (mlp) at (-1.0,-1.0) {MLP $f$ compartilhada};
+        \draw[seta] (-4.0,-0.3) -- (-2.6,-0.75);
+        \draw[seta] (2.2,-0.3) -- (0.6,-0.75);
+        \node[anchor=west, font=\scriptsize, text width=5.4cm, align=left] at (1.6,-1.0)
+            {\textbf{Mesmos pesos para $A$ e $B$:} os dois lados vão para o mesmo espaço de comparação.};
+
+        % --- Matriz E ---
+        \foreach \w/\x in {Alguém/-3.2, fazendo/-2.0, música/-0.8}
+            \node[cab, text=dexpiGreenDark] at (\x,-1.95) {\w};
+        \foreach \w/\y in {Um/-2.3, homem/-2.66, toca/-3.02, violão/-3.38}
+            \node[cab, text=dexpiBlue, anchor=east] at (-3.9,\y) {\w};
+        \node[fraco] at (-3.2,-2.3) {1,1};   \node[fraco] at (-2.0,-2.3) {1,2};   \node[fraco] at (-0.8,-2.3) {1,3};
+        \node[forte] at (-3.2,-2.66) {8,9};  \node[medio] at (-2.0,-2.66) {6,8};  \node[fraco] at (-0.8,-2.66) {3,1};
+        \node[fraco] at (-3.2,-3.02) {3,2};  \node[medio] at (-2.0,-3.02) {7,5};  \node[medio] at (-0.8,-3.02) {6,4};
+        \node[fraco] at (-3.2,-3.38) {1,2};  \node[fraco] at (-2.0,-3.38) {3,0};  \node[forte] at (-0.8,-3.38) {9,5};
+        \node[font=\small\bfseries, text=dexpiBlueDark, anchor=west] at (0.15,-2.84) {$E$};
+
+        % --- Fórmula ---
+        \node[draw=dexpiBlue, fill=white, rounded corners=3pt, line width=0.8pt, anchor=west, align=center, inner sep=6pt]
+            at (1.9,-2.84) {%
+            $E = f(A)\, f(B)^\top$\\[3pt]
+            {\scriptsize cada célula:}\enspace $e_{ij} = f(\mathbf{a}_i)^\top f(\mathbf{b}_j)$};
+
+        % --- Duas ideias, sem caixas ---
+        \node[anchor=north west, font=\scriptsize, text width=6.4cm, align=left] at (-7.0,-3.95) {%
+            \textcolor{dexpiGreenDark}{\textbf{Vantagem:}} só $m + n$ passagens pela rede, em vez de $m \cdot n$. O cruzamento é uma multiplicação de matrizes.};
+        \node[anchor=north west, font=\scriptsize, text width=6.4cm, align=left] at (0.4,-3.95) {%
+            \textcolor{dexpiBlue}{\textbf{$e_{ij}$ alto:}} as palavras se correspondem (violão $\times$ música). \textbf{$e_{ij}$ baixo:} sem relação.};
+    \end{tikzpicture}
+
+    \note{
+        Esta é a primeira etapa, \textit{attending}. No alto, as palavras da premissa $A$, ``um homem toca violão'', e as da hipótese $B$, ``alguém fazendo música''.
+        Todas as palavras, das duas frases, passam pela mesma MLP $f$: os pesos são compartilhados. É como usar a mesma régua para medir as duas frases, porque $f$ leva os embeddings para um mesmo espaço onde dá para compará-los.
+        Depois cruzamos as frases: a afinidade entre a palavra $i$ da premissa e a palavra $j$ da hipótese é o produto escalar $f(\mathbf{a}_i)^\top f(\mathbf{b}_j)$. Juntando todos os pares, temos a matriz $E$: uma linha por palavra da premissa e uma coluna por palavra da hipótese. Os valores aqui são ilustrativos. As células escuras são os pares fortes: ``homem'' com ``alguém'' e ``violão'' com ``música''. ``Toca'' e ``fazendo'' ficam num tom médio. ``Um'' não combina com nada.
+        A vantagem é computacional: em vez de passar cada um dos $m$ vezes $n$ pares pela rede, passamos cada palavra uma vez só, $m$ mais $n$ passos, e o cruzamento é uma única multiplicação de matrizes, $E = f(A) f(B)^\top$, que roda muito rápido em GPU.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 1 --- Attending: alinhamento suave com softmax}
+    \centering
+    {\scriptsize Normalizando $E$ em cada direção, cada token ganha um \destaque{resumo ponderado} da outra frase.\par}
+    \vspace{0.15cm}
+    \begin{tikzpicture}[
+        form/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=3pt, line width=0.8pt,
+                     minimum width=6.2cm, minimum height=1.15cm, align=center},
+        cel/.style={draw=white, line width=1pt, minimum width=1.2cm, minimum height=0.36cm, font=\scriptsize, inner sep=0pt},
+        alto/.style={cel, fill=dexpiGreenLight, draw=dexpiGreenDark, line width=0.8pt, text=dexpiGreenDark, font=\scriptsize\bfseries},
+        baixo/.style={cel, fill=gray!12, text=gray!70!black},
+        cab/.style={font=\scriptsize\bfseries, text height=1.6ex, text depth=0.4ex, inner sep=1pt}]
+
+        % --- As duas fórmulas ---
+        \node[form] (beta) at (-3.5,0) {%
+            $\displaystyle \boldsymbol{\beta}_i = \sum_{j=1}^{n} \mathrm{softmax}_{\text{linha } i}(e_{ij})\; \mathbf{b}_j$};
+        \node[form] (alfa) at (3.5,0) {%
+            $\displaystyle \boldsymbol{\alpha}_j = \sum_{i=1}^{m} \mathrm{softmax}_{\text{coluna } j}(e_{ij})\; \mathbf{a}_i$};
+        \node[font=\scriptsize, text=dexpiGreenDark, anchor=north] at (beta.south) {``Resumo'' da \textbf{Hipótese $B$} focado em $\mathbf{a}_i$};
+        \node[font=\scriptsize, text=dexpiBlue, anchor=north] at (alfa.south) {``Resumo'' da \textbf{Premissa $A$} focado em $\mathbf{b}_j$};
+
+        % --- Tabela de pesos (linha i = softmax sobre a hipótese) ---
+        \node[font=\scriptsize\bfseries, text=dexpiBlueDark] at (-4.55,-1.75) {Pesos softmax \textmd{\textit{(valores ilustrativos)}}};
+        \foreach \w/\x in {alguém/-5.75, fazendo/-4.55, música/-3.35}
+            \node[cab, text=dexpiGreenDark] at (\x,-2.0) {\w};
+        \foreach \w/\y in {homem/-2.42, toca/-2.78, violão/-3.14}
+            \node[cab, text=dexpiBlue, anchor=east] at (-6.4,\y) {\w};
+        \node[alto]  at (-5.75,-2.42) {0,80};  \node[baixo] at (-4.55,-2.42) {0,10};  \node[baixo] at (-3.35,-2.42) {0,10};
+        \node[baixo] at (-5.75,-2.78) {0,10};  \node[alto]  at (-4.55,-2.78) {0,70};  \node[baixo] at (-3.35,-2.78) {0,20};
+        \node[baixo] at (-5.75,-3.14) {0,05};  \node[baixo] at (-4.55,-3.14) {0,15};  \node[alto]  at (-3.35,-3.14) {0,80};
+        \node[font=\tiny\itshape, text=gray!70!black, anchor=west] at (-2.65,-2.42) {cada linha soma 1};
+
+        % --- Ponteiro: linha "violão" -> beta_violão ---
+        \draw[dexpiGreenDark, line width=0.8pt, rounded corners=3pt, -{Stealth[length=1.8mm]}]
+            (-2.7,-3.14) -- (-1.9,-3.14) -- (-1.9,-3.5);
+        \node[anchor=north, font=\footnotesize] at (-3.5,-3.52) {%
+            $\boldsymbol{\beta}_{\text{violão}} \approx 0{,}05\,\mathbf{b}_{\text{alguém}} + 0{,}15\,\mathbf{b}_{\text{fazendo}} + \mathbf{0{,}80}\,\mathbf{b}_{\text{música}}$};
+
+        % --- Por que "suave"? ---
+        \draw[dexpiGreenDark, fill=dexpiGreenLight, rounded corners=3pt, line width=0.8pt] (0.6,-1.6) rectangle (7.0,-4.1);
+        \node[anchor=north west, font=\scriptsize, text width=6.1cm, align=left,
+              execute at begin node={\everypar{\hangindent=0.75em\hangafter=1}\parskip=4pt}] at (0.8,-1.7) {%
+            \hangindent=0em{\footnotesize\bfseries\color{dexpiGreenDark} Por que ``suave''?}\par
+            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Alinhamento suave (softmax):} uma \textbf{mistura ponderada}, totalmente diferenciável, treinável de ponta a ponta.\par};
+    \end{tikzpicture}
+
+    \note{
+        Agora transformamos as afinidades da matriz $E$ em pesos. Para cada palavra $i$ da premissa, aplicamos uma softmax ao longo da linha $i$, ou seja, sobre todas as palavras da hipótese. Os pesos ficam entre zero e um e somam 1. Com eles, fazemos a média ponderada dos vetores da hipótese: esse é o beta $i$, um resumo da hipótese visto a partir da palavra $\mathbf{a}_i$.
+        Do outro lado é simétrico: para cada palavra $j$ da hipótese, a softmax corre ao longo da coluna $j$, e o alfa $j$ é o resumo da premissa visto a partir de $\mathbf{b}_j$.
+        Na tabela, com valores ilustrativos, ``homem'' olha para ``alguém'', ``toca'' olha para ``fazendo'' e ``violão'' olha para ``música''. Por isso o beta de ``violão'' é quase só o vetor de ``música'': oitenta por cento dele, com um pouco de ``fazendo'' e de ``alguém''.
+        Por que suave? É uma mistura ponderada, então tudo é diferenciável, e o modelo inteiro treina de ponta a ponta.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 2 --- Comparing: o par concorda?}
+    \centering
+    {\scriptsize Concatenamos cada token com o seu \destaque{resumo alinhado} e passamos por uma MLP $g$:\par}
+    \vspace{0.25cm}
+    \begin{tikzpicture}[
+        blA/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=1.5cm, minimum height=0.75cm, align=center, font=\scriptsize, inner sep=2pt},
+        blB/.style={draw=dexpiRedDark, fill=dexpiRedLight, minimum width=1.7cm, minimum height=0.75cm, align=center, font=\scriptsize, inner sep=2pt},
+        mlp/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=2.6cm, minimum height=0.45cm},
+        seta/.style={-{Stealth[length=1.8mm]}, line width=0.8pt, dexpiBlue!70},
+        chave/.style={decorate, decoration={brace, amplitude=4pt}, line width=0.7pt, dexpiBlue}]
+
+        % ---------- Exemplo 1: concordância ----------
+        \node[blA] (a1) at (-5.9,0)  {\textbf{violão}\\$\mathbf{a}_i$};
+        \node[blB] (b1) at (-4.3,0)  {\textbf{$\approx$ música}\\$\boldsymbol{\beta}_i$};
+        \draw[chave] (-3.3,-0.38) -- (-3.3,0.38) node[midway, right=5pt, font=\scriptsize\bfseries, text=dexpiBlue] {$2d$};
+        \node[mlp] (g1) at (-5.05,-1.15) {MLP $g$ compartilhada};
+        \draw[seta] (-5.05,-0.4) -- (g1.north);
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, minimum width=2.0cm, minimum height=0.45cm] (v1) at (-5.05,-2.2) {$\mathbf{v}_{1,i} \in \mathbb{R}^H$};
+        \draw[seta] (g1.south) -- (v1.north);
+        \node[font=\scriptsize\bfseries, text=dexpiGreenDark] at (-5.05,-2.75) {Veredito: Concordam};
+
+        % ---------- Exemplo 2: conflito ----------
+        \node[blA] (a2) at (-1.85,0)  {\textbf{toca}\\$\mathbf{a}_i$};
+        \node[blB] (b2) at (-0.25,0)  {\textbf{$\approx$ dormindo}\\$\boldsymbol{\beta}_i$};
+        \draw[chave] (0.75,-0.38) -- (0.75,0.38) node[midway, right=5pt, font=\scriptsize\bfseries, text=dexpiBlue] {$2d$};
+        \node[mlp] (g2) at (-1.0,-1.15) {MLP $g$ compartilhada};
+        \draw[seta] (-1.0,-0.4) -- (g2.north);
+        \node[draw=orange!80!red, fill=orange!20, rounded corners=2pt, font=\scriptsize, minimum width=2.0cm, minimum height=0.45cm] (v2) at (-1.0,-2.2) {$\mathbf{v}_{1,i} \in \mathbb{R}^H$};
+        \draw[seta] (g2.south) -- (v2.north);
+        \node[font=\scriptsize\bfseries, text=orange!70!red] at (-1.0,-2.75) {Veredito: Conflito};
+
+        % ---------- Equações ----------
+        \node[draw=dexpiBlue, fill=white, rounded corners=3pt, line width=0.8pt, anchor=west, align=center, inner sep=7pt]
+            at (1.6,-1.1) {%
+            {\scriptsize\bfseries\color{dexpiBlue} Os dois lados, com a mesma $g$:}\\[5pt]
+            $\mathbf{v}_{1,i} = g\big([\mathbf{a}_i,\, \boldsymbol{\beta}_i]\big),\quad i = 1, \dots, m$\\[5pt]
+            $\mathbf{v}_{2,j} = g\big([\mathbf{b}_j,\, \boldsymbol{\alpha}_j]\big),\quad j = 1, \dots, n$};
+
+        % ---------- Quadros inferiores ----------
+        \draw[dexpiBlueDark, fill=dexpiBlueLight, line width=0.8pt] (-7.0,-3.35) rectangle (-0.15,-4.8);
+        \fill[dexpiBlueDark] (-7.0,-3.35) rectangle (-0.15,-3.75);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (-6.85,-3.55) {MLP $g$};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left] at (-6.85,-3.82) {%
+            A MLP $g$ avalia a \textbf{relação lógica} entre uma palavra e o seu resumo alinhado da outra frase.};
+
+        \draw[dexpiRedDark, fill=dexpiRedLight, line width=0.8pt] (0.15,-3.35) rectangle (7.0,-4.8);
+        \fill[dexpiRedDark] (0.15,-3.35) rectangle (7.0,-3.75);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (0.3,-3.55) {Cuidado: sem ordem das palavras};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left] at (0.3,-3.82) {%
+            \textbullet~A comparação é feita \textbf{token a token}, sem olhar a posição nem a ordem sintática da palavra na frase.};
+    \end{tikzpicture}
+
+    \note{
+        Na etapa de comparação, pegamos cada token original e o resumo que foi alinhado a ele, concatenamos, e passamos por uma segunda MLP, a $g$. Para a premissa, concatenamos $\mathbf{a}_i$ com beta $i$. Para a hipótese, $\mathbf{b}_j$ com alfa $j$. A mesma $g$ serve aos dois lados.
+        Em termos de dimensão, a concatenação tem $2d$ componentes, as duas chaves no desenho, e $g$ a leva para uma dimensão oculta $H$.
+        A intuição: o vetor $\mathbf{v}_{1,i}$ é um veredito local sobre aquele pedaço. No primeiro exemplo, violão está alinhado a música: concordam. No segundo, toca está alinhado a dormindo: há conflito. A rede aprende isso sozinha no treino.
+        Um cuidado: a comparação é por token, sem olhar a posição da palavra na frase. Voltamos a isso no resumo.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 3 --- Aggregating: da comparação à classe}
+    \centering
+    {\scriptsize Somamos os \destaque{vereditos locais} de cada frase e classificamos:\par}
+    \vspace{0.25cm}
+    \begin{tikzpicture}[
+        vb/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\scriptsize, minimum width=1.5cm, minimum height=0.45cm},
+        seta/.style={-{Stealth[length=1.8mm]}, line width=0.8pt, dexpiBlue!70},
+        cel/.style={minimum height=0.36cm, font=\scriptsize, inner sep=0pt, minimum width=1.9cm}]
+
+        % --- Sequências de vereditos somadas ---
+        \node[font=\scriptsize] at (-5.7,0.35) {$\mathbf{v}_{1,1},\ \mathbf{v}_{1,2},\ \dots,\ \mathbf{v}_{1,m}$};
+        \draw[seta] (-4.25,0.35) -- node[above, font=\footnotesize, inner sep=1pt] {$\sum$} (-2.8,0.35);
+        \node[vb] (v1) at (-2.0,0.35) {$\mathbf{v}_1 \in \mathbb{R}^H$};
+        \node[font=\scriptsize] at (-5.7,-0.35) {$\mathbf{v}_{2,1},\ \mathbf{v}_{2,2},\ \dots,\ \mathbf{v}_{2,n}$};
+        \draw[seta] (-4.25,-0.35) -- node[above, font=\footnotesize, inner sep=1pt] {$\sum$} (-2.8,-0.35);
+        \node[vb] (v2) at (-2.0,-0.35) {$\mathbf{v}_2 \in \mathbb{R}^H$};
+
+        % --- Concatenação, MLP h e saída ---
+        \node[draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.9cm, minimum height=0.45cm, font=\scriptsize] (c1) at (0.15,0) {$\mathbf{v}_1$};
+        \node[draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.9cm, minimum height=0.45cm, font=\scriptsize] (c2) at (1.05,0) {$\mathbf{v}_2$};
+        \node[font=\tiny, text=dexpiBlueDark] at (0.6,-0.4) {$[\mathbf{v}_1,\mathbf{v}_2] \in \mathbb{R}^{2H}$};
+        \draw[seta] (v1.east) -- (c1.north west);
+        \draw[seta] (v2.east) -- (c1.south west);
+        \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=1.2cm, minimum height=0.6cm] (h) at (2.95,0) {MLP $h$};
+        \draw[seta] (c2.east) -- (h.west);
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, minimum width=2.6cm, minimum height=0.6cm] (y) at (5.6,0) {$\hat{\mathbf{y}} = h([\mathbf{v}_1,\mathbf{v}_2]) \in \mathbb{R}^3$};
+        \draw[seta] (h.east) -- (y.west);
+
+        % --- Quadros ---
+        \draw[dexpiBlueDark, fill=dexpiBlueLight, line width=0.8pt] (-7.0,-1.1) rectangle (-0.15,-3.2);
+        \fill[dexpiBlueDark] (-7.0,-1.1) rectangle (-0.15,-1.5);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (-6.85,-1.3) {MLP $h$};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left] at (-6.85,-1.57) {%
+            A MLP $h$ (\emph{Multi-Layer Perceptron} $h$) é o \textbf{classificador final} do modelo: a última rede da arquitetura, que olha o balanço global das duas frases juntas e dá o veredito sobre a relação lógica entre elas.};
+
+        \draw[dexpiGreenDark, fill=dexpiGreenLight, line width=0.8pt] (0.15,-1.1) rectangle (7.0,-3.2);
+        \fill[dexpiGreenDark] (0.15,-1.1) rectangle (7.0,-1.5);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (0.3,-1.3) {Por que somar ($\sum$)?};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left,
+              execute at begin node={\everypar{\hangindent=0.75em\hangafter=1}\parskip=4pt}] at (0.3,-1.6) {%
+            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Tamanho fixo ($H$):} qualquer comprimento de frase vira um vetor do mesmo tamanho $H$.\par
+            \textbullet~\textbf{Não depende da ordem} dos tokens (paralelizável).\par};
+
+        % --- Tabela de saída ---
+        \node[font=\scriptsize\bfseries, text=dexpiBlueDark, anchor=west] at (-6.6,-3.6) {Saída de $h$ (após softmax)};
+        \foreach \t/\x in {Entailment/-5.65, Neutral/-3.7, Contradiction/-1.75, {Decisão final}/0.2}
+            \node[cel, fill=dexpiBlueDark, text=white, font=\scriptsize\bfseries] at (\x,-4.0) {\t};
+        \node[cel, fill=dexpiBlueLight, font=\scriptsize\bfseries] at (-5.65,-4.36) {0,85};
+        \node[cel, fill=gray!12] at (-3.7,-4.36) {0,05};
+        \node[cel, fill=gray!12] at (-1.75,-4.36) {0,10};
+        \node[cel, fill=dexpiGreenLight, text=dexpiGreenDark, font=\scriptsize\bfseries\itshape] at (0.2,-4.36) {entailment};
+        \node[anchor=west, font=\scriptsize\itshape, text width=4.6cm, align=left, text=gray!70!black] at (1.4,-4.18) {(ilustrativo, para ``alguém está fazendo música'')};
+    \end{tikzpicture}
+
+    \note{
+        Por fim, a agregação. Para cada frase, somamos os vetores de comparação de todos os tokens: $\mathbf{v}_1$ é a soma dos $\mathbf{v}_{1,i}$ e $\mathbf{v}_2$ é a soma dos $\mathbf{v}_{2,j}$. A soma tem duas vantagens: o resultado tem sempre tamanho $H$, não importa o comprimento da frase, e não depende da ordem dos tokens.
+        Concatenamos os dois resumos, num vetor de $2H$ componentes, e passamos por uma terceira MLP, $h$, o classificador final. Ela devolve três pontuações, uma para cada classe do SNLI: implicação, neutro e contradição. Com uma softmax e a entropia cruzada, treinamos tudo em conjunto.
+        Na tabela, um exemplo ilustrativo: para ``alguém está fazendo música'', a maior probabilidade, 0,85, fica com \textit{entailment}.
+    }
+\end{frame}

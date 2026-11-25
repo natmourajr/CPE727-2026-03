@@ -1,0 +1,145 @@
+%----------------------------------------------------------------------------------------
+%    Processamento de Linguagem Natural -- Dive into Deep Learning (Cap. 15)
+%    Tema: DEXPI (CC BY-SA 4.0), adaptado do template da disciplina CPE727
+%----------------------------------------------------------------------------------------
+
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+\usetheme{DEXPI}
+
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[portuguese]{babel}
+\usepackage{amsmath,amssymb}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,calc,positioning,arrows.meta,matrix,fit,decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.10}
+\usepackage{color}
+
+\usepackage{listings}
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{dexpiBlue}\bfseries,
+    commentstyle=\color{dexpiGreenDark}\itshape,
+    stringstyle=\color{dexpiRedDark},
+    showstringspaces=false,
+    frame=single,
+    rulecolor=\color{dexpiLightBlue},
+    backgroundcolor=\color{dexpiBlueLight},
+    columns=fullflexible,
+    keepspaces=true
+}
+
+\newcommand{\hrefcol}[2]{\textcolor{cyan}{\href{#1}{#2}}}
+
+% Notação (segue o D2L)
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\uu}{\mathbf{u}}
+\newcommand{\xx}{\mathbf{x}}
+\newcommand{\yy}{\mathbf{y}}
+\newcommand{\V}{\mathcal{V}}
+\newcommand{\destaque}[1]{{\color{dexpiBlue}\textbf{#1}}}
+
+% adicionar o numero na lista final da apresentação
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+
+%----------------------------------------------------------------------------------------
+%    SLIDES DE TRANSIÇÃO: um no início de cada tópico (\section)
+%    Não entram na numeração, então os números do rodapé dos outros slides não mudam.
+%----------------------------------------------------------------------------------------
+
+\providecommand{\totaltopicos}{0} % o valor real vem do .aux (gravado no fim do documento)
+\AtBeginSection[]{%
+    \begin{frame}[plain,noframenumbering]
+        \begin{tikzpicture}[remember picture, overlay, shift={(current page.south west)}]
+            % logo, como no slide de título
+            \node[anchor=north west] at (0.7,8.5) {\includegraphics[height=1.0cm]{img/dexpi_logo.png}};
+            % faixa azul inclinada com o número e o título do tópico
+            \fill[dexpiBlue] (0,3.4) -- (12.4,3.4) -- (12.88,6.15) -- (0,6.15) -- cycle;
+            \node[anchor=west, text width=11.6cm, align=left, inner sep=0] at (0.7,4.775) {%
+                {\color{dexpiLightBlue}\small\bfseries Parte \insertsectionnumber\ifnum\totaltopicos>0{} de \totaltopicos\fi\par}
+                \vspace{2pt}
+                {\color{white}\LARGE\bfseries\hyphenpenalty=10000\exhyphenpenalty=10000 \insertsectionhead\par}};
+            % progresso: tópicos já vistos, o atual e os próximos
+            \ifnum\totaltopicos>0
+                \draw[dexpiLightBlue, line width=1.5pt] (1.0,2.6) -- ({1.0+(\totaltopicos-1)*0.8},2.6);
+                \foreach \i in {1,...,\totaltopicos} {
+                    \ifnum\i<\value{section}
+                        \node[circle, fill=dexpiLightBlue, text=dexpiBlue, font=\scriptsize\bfseries, minimum size=0.42cm, inner sep=0] at ({1.0+(\i-1)*0.8},2.6) {\i};
+                    \else\ifnum\i=\value{section}
+                        \node[circle, fill=dexpiBlue, text=white, font=\small\bfseries, minimum size=0.6cm, inner sep=0] at ({1.0+(\i-1)*0.8},2.6) {\i};
+                    \else
+                        \node[circle, draw=dexpiLightBlue, line width=1pt, fill=white, text=dexpiBlue!70, font=\scriptsize\bfseries, minimum size=0.42cm, inner sep=0] at ({1.0+(\i-1)*0.8},2.6) {\i};
+                    \fi\fi
+                }
+            \fi
+            % traço inclinado no canto inferior esquerdo, como no rodapé
+            \draw[dexpiBlue, line width=1pt] (-0.2,0.2) -- (0.8,-0.8);
+        \end{tikzpicture}
+    \end{frame}
+}
+
+%----------------------------------------------------------------------------------------
+%    TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{Processamento de Linguagem Natural}
+
+\subtitle{Dive into Deep Learning - Capítulos 15 e 16}
+
+\author{Pedro Ivo}
+\institute{CPE727 -- Aprendizado Profundo \\ Programa de Engenharia Elétrica -- COPPE/UFRJ}
+\date{\today}
+
+%----------------------------------------------------------------------------------------
+%    PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+\begin{frame}[plain]
+    \titlepage
+\end{frame}
+
+\begin{frame}{Conteúdo da Apresentação}
+    \setcounter{tocdepth}{1} % só os tópicos, sem os subtópicos (Skip-gram e CBOW)
+    \tableofcontents
+\end{frame}
+
+\input{secoes/01_word2vec}
+\input{secoes/02_treino_aproximado}
+\input{secoes/04_glove}
+\input{secoes/05_subword}
+\input{secoes/06_similaridade}
+\input{secoes/07_bert}
+\input{secoes/08_sentimento_rnn}
+\input{secoes/09_sentimento_cnn}
+\input{secoes/09b_nli_atencao}
+
+%------------------------------------------------
+
+\begin{frame}[allowframebreaks]
+\frametitle{Referências}
+    \footnotesize
+    \nocite{*}
+    \bibliographystyle{ieeetr}
+    \bibliography{reference.bib}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \Huge{\centerline{\textbf{Chegamos ao Fim}}}
+    \Huge{\centerline{\textbf{Obrigado pela sua Atenção}}}
+\end{frame}
+
+%------------------------------------------------
+
+% Total de tópicos para a barra de progresso dos slides de transição
+\makeatletter
+\immediate\write\@auxout{\gdef\string\totaltopicos{\the\value{section}}}
+\makeatother
+
+\end{document}

@@ -37,6 +37,7 @@ Cada aluno, depois da apresentação do seminário, deve atualizar a tabela abai
 | Autoencoders | Alice Cipriano e Leandro Fernandes | 10/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/autoencoders/slides.pdf) |
 | Representation Learning | Vinícius Ferreira Neves | 12/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/representation-learning/slides.pdf) |
 | GAN | Pedro Henrique Batista Campos, Daniel Cordeiro Marques | 12/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/gan/slides.pdf) |
+| NLP | Pedro Ivo | 24/11 | [apresentação](https://github.com/natmourajr/CPE727-2026-03/blob/main/Seminarios/processamento-linguagem-natural/slides.pdf) |
 
 ## Conteúdo recomendado
 
