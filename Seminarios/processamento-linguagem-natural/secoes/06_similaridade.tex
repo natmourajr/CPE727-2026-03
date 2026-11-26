@@ -1,0 +1,64 @@
+%========================================================================================
+%  Seção 15.7 do D2L -- Word Similarity and Analogy
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/similarity-analogy.html
+%========================================================================================
+
+\begin{frame}{Analogias: aritmética de vetores}
+    \begin{columns}[c]
+        \begin{column}{0.56\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item ``$a$ está para $b$ assim como $c$ está para $d$'': dados $a$, $b$, $c$, achar $d$.
+                \item A \textbf{diferença} $\xx_b - \xx_a$ codifica a relação. Basta aplicá-la a $c$:
+            \end{itemize}
+            \vspace{-0.15cm}
+            \begin{equation*}
+                \boxed{\;\xx_d \approx \xx_c + \xx_b - \xx_a\;}
+            \end{equation*}
+            \vspace{-0.25cm}
+            \begin{itemize}
+                \item $d$ é a palavra com \textbf{maior cosseno} com esse vetor.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \centering
+            \begin{tikzpicture}[scale=0.8,
+                pt/.style={circle, fill=dexpiBlue, inner sep=1.6pt},
+                lab/.style={font=\scriptsize}]
+                \node[pt] (a) at (0,0) {};
+                \node[pt] (b) at (2.2,0.7) {};
+                \node[pt] (c) at (0.4,1.8) {};
+                \node[pt, fill=dexpiGreenDark] (d) at (2.6,2.5) {};
+                \node[lab, below left] at (a) {man};
+                \node[lab, below right] at (b) {woman};
+                \node[lab, above left] at (c) {son};
+                \node[lab, above right, text=dexpiGreenDark] at (d) {\textbf{daughter}};
+                \draw[-{Stealth}, thick, dexpiRedDark] (a) -- (b);
+                \draw[-{Stealth}, thick, dexpiRedDark, dashed] (c) -- (d);
+                \node[font=\tiny, text=dexpiRedDark] at (1.25,0.05) {$\xx_b - \xx_a$};
+                \node[font=\tiny, text=dexpiRedDark] at (1.35,2.5) {mesma seta};
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+    \vspace{0.05cm}
+    \centering
+    \footnotesize
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Relação} & $a : b$ & $c : \;?$ & \textbf{resposta (D2L, GloVe 6B, $d = 50$)} \\
+        \midrule
+        gênero & man : woman & son : ? & {\color{dexpiGreenDark}\textbf{daughter}} \\
+        capital--país & beijing : china & tokyo : ? & {\color{dexpiGreenDark}\textbf{japan}} \\
+        superlativo & bad : worst & big : ? & {\color{dexpiGreenDark}\textbf{biggest}} \\
+        passado & do : did & go : ? & {\color{dexpiGreenDark}\textbf{went}} \\
+        \bottomrule
+    \end{tabular}
+
+    \note{
+        A segunda aplicação são as analogias. Uma analogia tem a forma ``a está para b assim como c está para d'': homem está para mulher assim como filho está para quê? Dadas as três primeiras palavras, queremos achar a quarta.
+        A ideia é que a diferença entre dois vetores codifica a relação entre as palavras. O vetor de ``woman'' menos o de ``man'' é uma seta que representa ``trocar masculino por feminino''. Se aplicarmos essa mesma seta a ``son'', devemos chegar perto de ``daughter''. A fórmula diz exatamente isso: o vetor de d é aproximadamente o de c, mais o de b, menos o de a. Depois procuramos a palavra cujo vetor tem o maior cosseno com esse resultado.
+        No desenho, a seta vermelha de man para woman é a mesma seta que leva de son para daughter. As quatro palavras formam um paralelogramo.
+        A tabela mostra os exemplos do livro, todos com resposta certa. Gênero: man está para woman como son está para daughter. Capital e país: beijing está para china como tokyo está para japan. Superlativo: bad está para worst como big está para biggest. E tempo verbal: do está para did como go está para went, que é um verbo irregular.
+        O ponto importante é que ninguém ensinou essas relações ao modelo. Elas aparecem como direções no espaço, só porque o modelo aprendeu a partir de quais palavras aparecem perto de quais.
+    }
+\end{frame}
